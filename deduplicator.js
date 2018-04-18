@@ -1,22 +1,23 @@
-const fs = require("fs");
-
 const { logger, update, logRecords } = require("./logger");
+const readFileAsync = require("./utility");
 
 const convertToUnix = date => {
-    return (new Date(date)).getTime();
+    const dateObj = new Date(date);
+    return dateObj.getTime();
 }
 
 //Go through a list of records and remove records duplicated by the given field
 const deduplicator = (records, field) => {
     const nonDuplicates = {};
     records.forEach((record) => {
+        const valueToDedup = record[field];
         //If the record already exists compare its timestamp with the current record
-        if(nonDuplicates[record[field]] && convertToUnix(nonDuplicates[record[field]].entryDate) <= convertToUnix(record.entryDate)) {
-            logger.write(update(field, nonDuplicates[record[field]], record));
-            nonDuplicates[record[field]] = record;
+        if(nonDuplicates[valueToDedup] && convertToUnix(nonDuplicates[valueToDedup].entryDate) <= convertToUnix(record.entryDate)) {
+            logger.write(update(field, nonDuplicates[valueToDedup], record));
+            nonDuplicates[valueToDedup] = record;
         //If the record doesn't already exist add it
-        } else if(!nonDuplicates[record[field]]) {
-            nonDuplicates[record[field]] = record;
+        } else if(!nonDuplicates[valueToDedup]) {
+            nonDuplicates[valueToDedup] = record;
         }
     })
     //map through the unique records object and return the records
@@ -33,15 +34,17 @@ const multiDeduplicator = (records, fields) => {
 }
 
 
-const deduplicateRecords = (file = "leads.json", ...args) => {
-    const fields = args[0] ? args : ["_id", "email"];
-    return fs.readFile(file, "utf-8", (err, data) => {
-        if(err) console.log(err);
+const deduplicateRecords = async (file = "leads.json", ...args) => {
+    try {
+        const fields = args[0] ? args : ["_id", "email"];
+        const data = await readFileAsync(file, "utf-8");
         const records = JSON.parse(data).leads;
         logger.write(logRecords("Initial Records", records));
         const deduplicatedRecords = multiDeduplicator(records, fields);
         logger.write(logRecords("Deduplicated Records", deduplicatedRecords));
-    })
+    } catch(err) {
+        console.log(err);
+    }
 }
 
 
