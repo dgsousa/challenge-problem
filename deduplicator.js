@@ -42,6 +42,7 @@ const deduplicateRecords = async (file = "leads.json", ...args) => {
         logger.write(logRecords("Initial Records", records));
         const deduplicatedRecords = multiDeduplicator(records, fields);
         logger.write(logRecords("Deduplicated Records", deduplicatedRecords));
+        return { "leads": deduplicatedRecords };
     } catch(err) {
         console.log(err);
     }
