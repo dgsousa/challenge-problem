@@ -2,7 +2,6 @@ const fs = require("fs");
 
 const { logger, update, logRecords } = require("./logger");
 
-
 const convertToUnix = date => {
     return (new Date(date)).getTime();
 }
@@ -27,6 +26,8 @@ const deduplicator = (records, field) => {
 //Takes an array of fields to deduplicate by
 const multiDeduplicator = (records, fields) => {
     return fields.reduce((acc, curr) => {
+        //Checks to make sure the field is valid, skips over it if not valid
+        if(!records[0][curr]) return acc;
         return deduplicator(acc, curr);
     }, records);
 }
